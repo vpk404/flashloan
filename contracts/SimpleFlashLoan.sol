@@ -28,6 +28,13 @@ contract SimpleFlashLoan is FlashLoanSimpleReceiverBase {
     /**
         This function is called after your contract has received the flash loaned amount
      */
+    struct FlashParams {
+        address routerA;
+        address routerB;
+        address tokenA;
+        address tokenB;
+    }
+
     function executeOperation(
         address asset,
         uint256 amount,
@@ -36,54 +43,48 @@ contract SimpleFlashLoan is FlashLoanSimpleReceiverBase {
         bytes calldata params
     ) external override returns (bool) {
         
-        // 1. Decode params (Router A, Router B, Token A, Token B)
-        (address routerA, address routerB, address tokenA, address tokenB) = abi.decode(params, (address, address, address, address));
+        // 1. Decode params
+        FlashParams memory decoded = abi.decode(params, (FlashParams));
         
-        uint256 amountOwed = amount + premium;
-
         // 2. Approve Router A to spend our loan (Token A)
-        IERC20(asset).approve(routerA, amount);
+        IERC20(asset).approve(decoded.routerA, amount);
 
         // 3. Swap on Router A (Buy Token B with Token A)
-        address[] memory path1 = new address[](2);
-        path1[0] = tokenA; // Borrowed Asset (e.g. USDC)
-        path1[1] = tokenB; // Target Asset (e.g. WETH)
+        address[] memory path = new address[](2);
+        path[0] = decoded.tokenA;
+        path[1] = decoded.tokenB;
         
-        uint[] memory amounts1 = IUniswapV2Router(routerA).swapExactTokensForTokens(
+        uint[] memory amounts = IUniswapV2Router(decoded.routerA).swapExactTokensForTokens(
             amount, 
-            0, // Accept any amount of Token B (Slippage risk handled by profit check)
-            path1, 
+            0,
+            path,
             address(this), 
             block.timestamp
         );
         
-        uint256 amountReceivedB = amounts1[1];
+        // Reuse path for second swap
+        path[0] = decoded.tokenB;
+        path[1] = decoded.tokenA;
         
         // 4. Approve Router B to spend Token B
-        IERC20(tokenB).approve(routerB, amountReceivedB);
+        IERC20(decoded.tokenB).approve(decoded.routerB, amounts[1]);
         
         // 5. Swap on Router B (Sell Token B back to Token A)
-        address[] memory path2 = new address[](2);
-        path2[0] = tokenB;
-        path2[1] = tokenA;
-        
-        // Try to swap back. We need AT LEAST amountOwed to repay loan.
-        try IUniswapV2Router(routerB).swapExactTokensForTokens(
-            amountReceivedB,
-            amountOwed, // Fail if we don't get enough to repay loan!
-            path2, 
+        // Try to swap back. We need AT LEAST amount + premium to repay loan.
+        try IUniswapV2Router(decoded.routerB).swapExactTokensForTokens(
+            amounts[1],
+            amount + premium, // Fail if we don't get enough to repay loan!
+            path,
             address(this), 
             block.timestamp
         ) returns (uint[] memory amounts2) {
-            uint256 amountReceivedA = amounts2[1];
             
             // 6. Approve Aave to take back the loan + fee
-            IERC20(asset).approve(address(POOL), amountOwed);
+            IERC20(asset).approve(address(POOL), amount + premium);
             
             // 7. Profit Check
-            if (amountReceivedA > amountOwed) {
-                uint256 profit = amountReceivedA - amountOwed;
-                IERC20(asset).transfer(owner, profit);
+            if (amounts2[1] > amount + premium) {
+                IERC20(asset).transfer(owner, amounts2[1] - (amount + premium));
             }
             
             return true;

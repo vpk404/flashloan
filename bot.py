@@ -23,8 +23,17 @@ SUSHISWAP_ROUTER = "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506"
 # Connect to Polygon
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
+if not w3.is_connected():
+    print("Error: Could not connect to Polygon RPC. Check your internet or RPC_URL.")
+    exit(1)
+
 if not PRIVATE_KEY:
     print("Error: PRIVATE_KEY not found in .env file.")
+    exit(1)
+
+if CONTRACT_ADDRESS == "0x0000000000000000000000000000000000000000":
+    print("Warning: CONTRACT_ADDRESS is not set. You must deploy the contract first.")
+    print("Run: npx hardhat run scripts/deploy.js --network polygon")
     exit(1)
 
 account = w3.eth.account.from_key(PRIVATE_KEY)
@@ -127,7 +136,7 @@ def run_bot():
             time.sleep(3)
 
         except Exception as e:
-            print(f"Error loop: {e}")
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Error loop: {e}")
             time.sleep(3)
 
 if __name__ == "__main__":

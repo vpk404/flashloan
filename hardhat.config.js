@@ -16,6 +16,7 @@ module.exports = {
       forking: {
         // Get a free key from alchemy.com for best performance
         url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
+        blockNumber: 82980000 // Pinned block for consistent testing
       }
     },
     polygon: {

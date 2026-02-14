@@ -14,7 +14,9 @@
     "chai": "^4.3.7",
     "dotenv": "^16.0.3",
     "ethereum-waffle": "^3.4.4",
-    "ethers": "^5.7.2",
-    "hardhat": "^2.12.4"
+    "ethers": "^5.7.2"
+  },
+  "devDependencies": {
+    "hardhat": "^2.28.6"
   }
 }

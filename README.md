@@ -54,6 +54,21 @@ python bot.py
 
 The bot will now scan prices every 3 seconds.
 
+## 🧪 Testing
+
+To verify the safety and profitability logic (using a mainnet fork):
+
+1.  **Configure `.env`**: Ensure `POLYGON_RPC_URL` is set to a reliable RPC.
+2.  **Run Tests**:
+    ```bash
+    npx hardhat test
+    ```
+    This will:
+    *   Fork Polygon Mainnet.
+    *   Deploy the Flash Loan contract.
+    *   Verify that unprofitable trades revert (Zero Capital Risk).
+    *   Simulate a market opportunity and verify profit execution.
+
 - **Spread Q->S:** Price difference buying on QuickSwap, selling on SushiSwap.
 - **[!!!] PROFITABLE OPPORTUNITY:** The bot found a trade and sent the transaction!
 
