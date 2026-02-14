@@ -60,3 +60,34 @@ The bot will now scan prices every 3 seconds.
 ## ❓ FAQ
 *   **Why does it say "Error"?** Check your RPC URL or internet connection.
 *   **Why did my trade fail?** Slippage or another bot was faster. You only lost the gas fee (~$0.01).
+
+
+## 🛡️ $10 Low-Risk Mode (Recommended)
+
+If your budget is only **$10**, use the bot in safe mode first:
+
+1. Set these values in `.env`:
+
+```env
+POLYGON_RPC_URL=https://polygon-rpc.com
+PRIVATE_KEY=your_wallet_private_key
+CONTRACT_ADDRESS=your_deployed_contract_address
+
+# Safety-first config
+DRY_RUN=true
+LOAN_AMOUNT_USDC=10
+MIN_PROFIT_USDC=1.2
+MAX_GAS_GWEI=80
+MAX_DAILY_ATTEMPTS=3
+SCAN_INTERVAL_SECONDS=3
+COOLDOWN_SECONDS=10
+```
+
+2. Start in `DRY_RUN=true` for at least 24 hours and verify opportunities.
+3. Switch to `DRY_RUN=false` only after logs consistently show profits above `MIN_PROFIT_USDC`.
+
+### Why this is safer for small capital
+- **No forced live trading:** `DRY_RUN=true` prevents accidental transactions.
+- **Gas guard:** skips trades when network gas is above your limit.
+- **Daily attempt limit:** caps the number of live attempts per day.
+- **Higher minimum profit target:** helps avoid marginal trades that lose after fees/slippage.
